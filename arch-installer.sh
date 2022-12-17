@@ -188,7 +188,7 @@ enable_networking () {
 }
 
 unmount_mnt () {
-    read -e -p "Unmount /mnt? [y/Y] "
+    read -e -p "Unmount /mnt? [y/N] "
     echo
     if [[ $REPLY =~ ^[Yy] ]];then
         umount -R /mnt
