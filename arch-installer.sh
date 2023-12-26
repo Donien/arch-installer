@@ -24,11 +24,22 @@ c_yellow='\033[0;33m'
 
 
 
+check_mount () {
+    findmnt /mnt &> /dev/null
+    if [ $? -eq 1 ];then
+        echo "Nothing is mounted at /mnt"
+        return 1
+    fi
+    return 0
+}
+
 ask_crypt_device () {
+    root_dev=$(findmnt /mnt --output SOURCE --noheadings)
     while true
     do
         read -e -p "Path to your encrypted partition (leave empty for no encryption): " crypt_dev
         if [[ -z $( echo -n $crypt_dev) ]];then
+            echo NOPE
             return
         fi
         blkid -t TYPE=crypto_LUKS $crypt_dev &> /dev/null
@@ -37,7 +48,6 @@ ask_crypt_device () {
             continue
         fi
         crypt_uuid=$(blkid -t TYPE=crypto_LUKS $crypt_dev --output export | grep "^UUID" | cut -d '=' -f 2)
-        root_dev=$(findmnt /mnt --output SOURCE --noheadings)
         break
     done
 }
@@ -118,7 +128,7 @@ install_packages () {
     efibootmgr
     lvm2
     "
-    pacstrap /mnt --needed --noconfirm $(echo $pacstrap_pkgs)
+    pacstrap /mnt --needed --noconfirm $pacstrap_pkgs
 }
 
 set_fstab () {
@@ -148,10 +158,10 @@ set_mkinitcpio_hooks () {
     udev
     autodetect
     modconf
-    block
     keyboard
     keymap
     consolefont
+    block
     encrypt
     lvm2
     filesystems
@@ -163,7 +173,11 @@ set_mkinitcpio_hooks () {
 }
 
 configure_grub () {
-    grub_cmdline="cryptdevice=UUID=$crypt_uuid:$(basename $root_dev) root=$root_dev"
+    if [ -z "$crypt_uuid" ];then
+        grub_cmdline="root=$root_dev"
+    else
+        grub_cmdline="cryptdevice=UUID=$crypt_uuid:$(basename $root_dev) root=$root_dev"
+    fi
     sed -i -E "s|(^GRUB_CMDLINE_LINUX=.)(.*)(.)|\1$grub_cmdline\3|" /mnt/etc/default/grub
 }
 
@@ -223,6 +237,7 @@ ask_confirmation () {
 }
 
 # main
+check_mount || exit 1
 ask_crypt_device
 ask_username
 ask_host_name
