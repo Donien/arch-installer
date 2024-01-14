@@ -129,6 +129,7 @@ install_packages () {
     efibootmgr
     lvm2
     "
+    pacman -Sy --needed --noconfirm archlinux-keyring
     pacstrap /mnt --needed --noconfirm $pacstrap_pkgs
 }
 
