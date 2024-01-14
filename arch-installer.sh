@@ -178,7 +178,7 @@ configure_grub () {
     if [ -z "$crypt_uuid" ];then
         grub_cmdline="root=$root_dev"
     else
-        grub_cmdline="cryptdevice=UUID=$crypt_uuid:$(basename $root_dev) root=$root_dev"
+        grub_cmdline="cryptdevice=UUID=$crypt_uuid:$(basename $root_dev)_lvm root=$root_dev"
     fi
     sed -i -E "s|(^GRUB_CMDLINE_LINUX=.)(.*)(.)|\1$grub_cmdline\3|" /mnt/etc/default/grub
 }
