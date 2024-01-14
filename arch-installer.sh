@@ -123,6 +123,7 @@ install_packages () {
     base
     base-devel
     linux
+    linux-firmware
     networkmanager
     grub
     efibootmgr
